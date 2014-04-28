@@ -8,15 +8,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 
-import com.jinnova.smartpad.db.DbIterator;
-import com.jinnova.smartpad.db.PromotionDao;
 import com.jinnova.smartpad.db.ScriptRunner;
-import com.jinnova.smartpad.member.CCardBranch;
-import com.jinnova.smartpad.member.CCardType;
 import com.jinnova.smartpad.partner.Catalog;
 import com.jinnova.smartpad.partner.IDetailManager;
 import com.jinnova.smartpad.partner.PartnerManager;
-import com.jinnova.smartpad.partner.Promotion;
 import com.jinnova.smartpad.partner.SmartpadCommon;
 import com.jinnova.smartpad.partner.SystemCatalogGenrator;
 
@@ -39,10 +34,9 @@ public class ClientSupport {
 		dropDrillDatabaseIfExists();
 		ScriptRunner.createDatabase(drillDbhost, drillDbport, drillDbname, drillDblogin, drillDbpass, true);
 		SmartpadCommon.initialize(drillDbhost, drillDbport, drillDbname, drillDblogin, drillDbpass);
-		SystemCatalogGenrator.generate();
+		new SystemCatalogGenrator(true).generate();
 		PartnerManager.loadSyscatsInitially();
-		copyDataToDrilling(mainDbname);
-		generateClusterData();
+		copyNonClusterDataToDrilling(mainDbname);
 	}
 
 	public ClientSupport(String drillDbhost, String drillDbport,
@@ -54,8 +48,12 @@ public class ClientSupport {
 		this.drillDblogin = drillDblogin;
 		this.drillDbpass = drillDbpass;
 	}
+	
+	Connection openConnection() throws SQLException {
+		return DriverManager.getConnection(makeDburl(drillDbhost, drillDbport, drillDbname), drillDblogin, drillDbpass);
+	}
 
-	private void copyDataToDrilling(String mainDbname) throws SQLException {
+	private void copyNonClusterDataToDrilling(String mainDbname) throws SQLException {
 
 		Connection conn = DriverManager.getConnection(makeDburl(drillDbhost, drillDbport, drillDbname), drillDblogin, drillDbpass);
 		Statement stmt = conn.createStatement();
@@ -74,6 +72,7 @@ public class ClientSupport {
 		catList.addAll(PartnerManager.instance.getSystemSubCatalog(rootCat.getId()));
 		while (!catList.isEmpty()) {
 			Catalog cat = catList.removeFirst();
+			sql = "create table " + cat.getId() + "_clusters";
 			sql = "insert into " + cat.getId() + " (select * from " + mainDbname + "." + cat.getId() + ")";
 			System.out.println("SQL: " + sql);
 			stmt.execute(sql);
@@ -83,6 +82,7 @@ public class ClientSupport {
 			}
 		}
 		
+		stmt.close();
 		conn.close();
 	}
 	
@@ -104,31 +104,8 @@ public class ClientSupport {
 		}
 		return dburl + "/" + dbname + "?useUnicode=true&characterEncoding=UTF-8";
 	}
-
-	private void generateClusterData() throws SQLException { 
-		
-		Connection conn = DriverManager.getConnection(makeDburl(drillDbhost, drillDbport, drillDbname), drillDblogin, drillDbpass);
-		Statement stmt = conn.createStatement();
-		for (int i = 1; i <= 3; i++) {
-			String sql = "insert into clusters values (" + i + ")";
-			System.out.println("SQL: " + sql);
-			stmt.executeUpdate(sql);
-			sql = "insert into operations_clusters (select " + i + "," + i + ", operations.* from operations);";
-			System.out.println("SQL: " + sql);
-			stmt.executeUpdate(sql);
-		}
-		
-		/*
-		 insert into promos_clusters (cluster_id, cluster_rank, promo_id, store_id, branch_id, syscat_id, 
-			`name`,`descript`,`images`,`member_level`,`member_point`,
-		  	`gps_lon`,`gps_lat`,`gps_inherit`,`create_date`,`update_date`,`create_by`,`update_by`)
-		  	 
-			(select 1, 1, promo_id, store_id, branch_id, syscat_id, 
-			`name`,`descript`,`images`,`member_level`,`member_point`,
-		  	`gps_lon`,`gps_lat`,`gps_inherit`,`create_date`,`update_date`,`create_by`,`update_by`
-		  	from promos);
-		 */
-		
+	
+	static LinkedList<String> buildSyscatIdList() {
 		LinkedList<String> allSyscatIds = new LinkedList<String>();
 		LinkedList<Catalog> catList = new LinkedList<Catalog>();
 		catList.addAll(PartnerManager.instance.getSystemSubCatalog(IDetailManager.SYSTEM_BRANCH_ID));
@@ -140,42 +117,6 @@ public class ClientSupport {
 				catList.addAll(subCats);
 			}
 		}
-
-		//for each cluster, generate syscat/promotion pairs
-		for (int i = 1; i <= 3; i++) {
-			
-			//for each syscat, generate at most 100 promotions
-			for (String oneSyscatId : allSyscatIds) {
-				DbIterator<Promotion> promos = new PromotionDao().iterateSyscatPromos(oneSyscatId);
-				while (promos.hasNext()) {
-					Promotion p = promos.next();
-					int visaCredit = p.getCCardOpt(CCardBranch.visa, CCardType.credit) != null ? 1 : 0;
-					int visaDebit = p.getCCardOpt(CCardBranch.visa, CCardType.debit) != null ? 1 : 0;
-					int masterCredit = p.getCCardOpt(CCardBranch.master, CCardType.credit) != null ? 1 : 0;
-					int masterDebit = p.getCCardOpt(CCardBranch.master, CCardType.debit) != null ? 1 : 0;
-					String sql = "insert into promos_clusters ("
-							+ "cluster_id, cluster_rank, "
-							+ "visa_c, visa_c_issuer, visa_d, visa_d_issuer, "
-							+ "master_c, master_c_issuer, master_d, master_d_issuer, "
-							+ "promo_id, branch_id, store_id, syscat_id, gps_lon=, gps_lat, "
-							+ "name, descript, images"
-							+ ") "
-							
-							+ "(select "
-							+ "1, 1, "
-							+ visaCredit + ", null, " + visaDebit + ", null, " 
-							+ masterCredit + ", null, " + masterDebit + ", null, "
-							+ "promo_id, branch_id, store_id, syscat_id, gps_lon=, gps_lat, "
-							+ "name, descript, images)"
-							
-							+ "where promo_id='" + p.getId() + "')";
-					System.out.println("SQL: " + sql);
-					stmt.executeUpdate(sql);
-				}
-				promos.close();
-			}
-		}
-		stmt.close();
-		conn.close();
+		return allSyscatIds;
 	}
 }
