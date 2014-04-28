@@ -37,7 +37,7 @@ public class CatitemClusterGenerator {
 			DbIterator<String> clusters = cs.iterateClusters();
 			while (clusters.hasNext()) {
 				String clu = clusters.next();
-				String sql = "insert into " + cat.getId() + "_c (select " + clu + ", 1, " + cat.getId() + ".* from " + cat.getId() + 
+				String sql = "insert into x" + cat.getId() + " (select " + clu + ", 1, " + cat.getId() + ".* from " + cat.getId() + 
 						" where syscat_id like '" + cat.getId() + "%' limit 50)";
 				System.out.println("SQL: " + sql);
 				stmt.execute(sql);
