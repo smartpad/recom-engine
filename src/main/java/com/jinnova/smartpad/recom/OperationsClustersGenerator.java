@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.LinkedList;
+
+import com.jinnova.smartpad.db.DbIterator;
 
 public class OperationsClustersGenerator {
 	
@@ -24,14 +27,18 @@ public class OperationsClustersGenerator {
 
 		Connection conn = cs.openConnection();
 		Statement stmt = conn.createStatement();
-		for (int i = 1; i <= 3; i++) {
-			String sql = "insert into clusters values (" + i + ")";
-			System.out.println("SQL: " + sql);
-			stmt.executeUpdate(sql);
-			sql = "insert into operations_clusters (select " + i + "," + i + ", operations.* from operations);";
-			System.out.println("SQL: " + sql);
-			stmt.executeUpdate(sql);
+		DbIterator<String> clusters = cs.iterateClusters();
+		LinkedList<String> syscats = ClientSupport.buildSyscatIdList();
+		while (clusters.hasNext()) {
+			String cluid = clusters.next();
+			for (String oneSyscat : syscats) {
+				String sql = "insert into operations_clusters (select " + cluid + "," + 1 + ", operations.* " +
+						"from operations where syscat_id='" + oneSyscat + "' limit 50);";
+				System.out.println("SQL: " + sql);
+				stmt.executeUpdate(sql);
+			}
 		}
+		clusters.close();
 		stmt.close();
 		conn.close();
 	}

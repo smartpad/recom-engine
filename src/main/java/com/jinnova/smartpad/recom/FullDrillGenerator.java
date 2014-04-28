@@ -10,6 +10,7 @@ public class FullDrillGenerator {
 		
 		ClientSupport cs = new ClientSupport("localhost", null, "smartpad_drill", "root", "");
 		cs.buildDrillDatabase("smartpad");
+		cs.generateDummyClusters();
 		new OperationsClustersGenerator(cs).generate();
 		new PromotionsClustersGenerator(cs).generate();
 		new CatitemClusterGenerator(cs).generate();

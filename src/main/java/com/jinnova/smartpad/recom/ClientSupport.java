@@ -4,10 +4,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 
+import com.jinnova.smartpad.db.DbIterator;
+import com.jinnova.smartpad.db.DbPopulator;
 import com.jinnova.smartpad.db.ScriptRunner;
 import com.jinnova.smartpad.partner.Catalog;
 import com.jinnova.smartpad.partner.IDetailManager;
@@ -53,6 +56,19 @@ public class ClientSupport {
 		return DriverManager.getConnection(makeDburl(drillDbhost, drillDbport, drillDbname), drillDblogin, drillDbpass);
 	}
 
+	void generateDummyClusters() throws SQLException { 
+
+		Connection conn = openConnection();
+		Statement stmt = conn.createStatement();
+		for (int i = 1; i <= 3; i++) {
+			String sql = "insert into clusters values (" + i + ")";
+			System.out.println("SQL: " + sql);
+			stmt.executeUpdate(sql);
+		}
+		stmt.close();
+		conn.close();
+	}
+
 	private void copyNonClusterDataToDrilling(String mainDbname) throws SQLException {
 
 		Connection conn = DriverManager.getConnection(makeDburl(drillDbhost, drillDbport, drillDbname), drillDblogin, drillDbpass);
@@ -72,7 +88,6 @@ public class ClientSupport {
 		catList.addAll(PartnerManager.instance.getSystemSubCatalog(rootCat.getId()));
 		while (!catList.isEmpty()) {
 			Catalog cat = catList.removeFirst();
-			sql = "create table " + cat.getId() + "_clusters";
 			sql = "insert into " + cat.getId() + " (select * from " + mainDbname + "." + cat.getId() + ")";
 			System.out.println("SQL: " + sql);
 			stmt.execute(sql);
@@ -118,5 +133,24 @@ public class ClientSupport {
 			}
 		}
 		return allSyscatIds;
+	}
+
+	DbIterator<String> iterateClusters() throws SQLException {
+		Connection conn = openConnection();
+		Statement stmt = conn.createStatement();
+		String sql = "select cluster_id from clusters";
+		System.out.println("SQL: " + sql);
+		ResultSet rs = stmt.executeQuery(sql);
+		return new DbIterator<String>(conn, stmt, rs, new DbPopulator<String>() {
+
+			@Override
+			public String populate(ResultSet rs) throws SQLException {
+				return rs.getString("cluster_id");
+			}
+
+			@Override
+			public void preparePopulating() {
+			}
+		});
 	}
 }
