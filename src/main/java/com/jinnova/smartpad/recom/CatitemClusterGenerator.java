@@ -1,5 +1,7 @@
 package com.jinnova.smartpad.recom;
 
+import static com.jinnova.smartpad.partner.IDetailManager.CLUSPRE;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
@@ -37,7 +39,7 @@ public class CatitemClusterGenerator {
 			DbIterator<String> clusters = cs.iterateClusters();
 			while (clusters.hasNext()) {
 				String clu = clusters.next();
-				String sql = "insert into x" + cat.getId() + " (select " + clu + ", 1, " + cat.getId() + ".* from " + cat.getId() + 
+				String sql = "insert into " + CLUSPRE + cat.getId() + " (select " + clu + ", 1, " + cat.getId() + ".* from " + cat.getId() + 
 						" where syscat_id like '" + cat.getId() + "%' limit 50)";
 				System.out.println("SQL: " + sql);
 				stmt.execute(sql);

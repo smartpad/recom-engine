@@ -49,8 +49,11 @@ public class PromotionsClustersGenerator {
 				while (count < 50 && promos.hasNext()) {
 					Promotion p = promos.next();
 					Schedule schedule = p.getSchedule();
-					if (schedule != null && !schedule.isInAffect(now)) {
-						continue;
+					if (schedule != null) {
+						Date latestEnd = schedule.getLatestEnd();
+						if (latestEnd != null && latestEnd.before(now)) {
+							continue;
+						}
 					}
 					count++;
 					CCardRequirement visaCredit = p.getCCardOpt(CCardBranch.visa, CCardType.credit);
