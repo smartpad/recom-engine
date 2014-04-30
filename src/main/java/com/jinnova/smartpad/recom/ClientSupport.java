@@ -20,6 +20,9 @@ import com.jinnova.smartpad.partner.SystemCatalogGenrator;
 
 public class ClientSupport {
 	
+	static final boolean RECURSIVE = true;
+	static final boolean DIRECT = false;
+	
 	private final String drillDbhost;
 	private final String drillDbport;
 	private final String drillDbname;

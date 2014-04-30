@@ -1,5 +1,7 @@
 package com.jinnova.smartpad.recom;
 
+import static com.jinnova.smartpad.recom.ClientSupport.*;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
@@ -45,7 +47,7 @@ public class PromotionsClustersGenerator {
 			int count = 0;
 			Date now = new Date();
 			for (String oneSyscatId : allSyscatIds) {
-				DbIterator<Promotion> promos = new PromotionDao().iteratePromosBySyscat(oneSyscatId);
+				DbIterator<Promotion> promos = new PromotionDao().iteratePromosBySyscat(oneSyscatId, null, RECURSIVE, null);
 				while (count < 50 && promos.hasNext()) {
 					Promotion p = promos.next();
 					Schedule schedule = p.getSchedule();
