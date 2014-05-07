@@ -63,22 +63,22 @@ public class PromotionsClustersGenerator {
 					CCardRequirement masterCredit = p.getCCardOpt(CCardBranch.master, CCardType.credit);
 					CCardRequirement masterDebit = p.getCCardOpt(CCardBranch.master, CCardType.debit);
 					String sql = "insert into promos_clusters ("
-							+ "cluster_id, cluster_rank, "
+							+ "cluster_id, cluster_rank, syscat_id, "
 							+ "visa_c, visa_c_issuers, visa_d, visa_d_issuers, "
 							+ "master_c, master_c_issuers, master_d, master_d_issuers, "
-							+ "promo_id, branch_id, store_id, syscat_id, gps_lon, gps_lat, "
+							+ "promo_id, branch_id, store_id, gps_lon, gps_lat, "
 							+ "name, descript, images, create_date, create_by"
 							+ ") "
 							
 							+ "(select "
-							+ cluid + ", 1, "
+							+ cluid + ", 1, '" + oneSyscatId + "', "
 							+ (visaCredit == null ? 0 : 1) + ", " + (visaCredit == null ? "null" : visaCredit.requiredCCardIssuer) + ", "
 							+ (visaDebit == null ? 0 : 1) + ", " + (visaDebit == null ? "null" : visaDebit.requiredCCardIssuer) + ", " 
 							+ (masterCredit == null ? 0 : 1) + ", "
 							+ (masterCredit == null ? "null" : masterCredit.requiredCCardIssuer) + ", " 
 							+ (masterDebit == null ? 0 : 1) + ", " + (masterDebit == null ? "null" : masterDebit.requiredCCardIssuer) + ", "
 							//+ p.getSchedule().getEarliestStart()
-							+ "promo_id, branch_id, store_id, syscat_id, gps_lon, gps_lat, "
+							+ "promo_id, branch_id, store_id, gps_lon, gps_lat, "
 							+ "name, descript, images, create_date, create_by "
 							
 							+ "from promos where promo_id='" + p.getId() + "')";
