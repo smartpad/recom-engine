@@ -40,7 +40,8 @@ public class ClientSupport {
 		dropDrillDatabaseIfExists();
 		ScriptRunner.createDatabase(drillDbhost, drillDbport, drillDbname, drillDblogin, drillDbpass, true);
 		SmartpadCommon.initialize(drillDbhost, drillDbport, drillDbname, drillDblogin, drillDbpass);
-		new SystemCatalogGenrator(true).generate();
+		SystemCatalogGenrator.createClusterTable = true;
+		SystemCatalogGenrator.generate();
 		PartnerManager.loadSyscatsInitially();
 		copyNonClusterDataToDrilling(mainDbname);
 	}
