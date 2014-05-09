@@ -14,6 +14,7 @@ public class FullDrillGenerator {
 		new OperationsClustersGenerator(cs).generate();
 		new PromotionsClustersGenerator(cs).generate();
 		new CatitemClusterGenerator(cs).generate();
+		new CatGroupingGenerator(cs).generate();
 	}
 
 }
