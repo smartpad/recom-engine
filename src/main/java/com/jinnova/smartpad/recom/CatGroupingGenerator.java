@@ -59,7 +59,7 @@ public class CatGroupingGenerator {
 					JsonArray ja = new JsonArray();
 					while (rs.next()) {
 						JsonObject json = new JsonObject();
-						json.add(CatalogField.ATT_GROUPING_VID, new JsonPrimitive(rs.getString(1)));
+						json.add(CatalogField.ATT_GROUPING_VALUEID, new JsonPrimitive(rs.getString(1)));
 						json.add(CatalogField.ATT_GROUPING_VALUE, new JsonPrimitive(rs.getString(2)));
 						ja.add(json);
 						modified = true;
