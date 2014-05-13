@@ -11,11 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
 import com.jinnova.smartpad.db.CatalogDao;
-import com.jinnova.smartpad.db.CatalogItemDao;
 import com.jinnova.smartpad.partner.Catalog;
 import com.jinnova.smartpad.partner.CatalogField;
 import com.jinnova.smartpad.partner.CatalogSpec;
@@ -50,26 +46,28 @@ public class CatGroupingGenerator {
 			boolean modified = false;
 			for (ICatalogField ifield : spec.getAllFields()) {
 				CatalogField field = (CatalogField) ifield;
-				if (field.getGroupingType() == GROUPING_DISTINCT) {
-					String fid = field.getId() + CatalogItemDao.GROUPING_POSTFIX;
+				if (field.getGroupingType() == SEGMENT_DISTINCT) {
+					String fid = field.getId() + ICatalogField.SEGMENT_POSTFIX;
 					String sql = "select " + fid + ", " + field.getId() + 
 							" from " + spec.getSpecId() + " where syscat_id like '" + cat.getId() + "%' group by " + fid;
 					System.out.println("SQL: " + sql);
 					ResultSet rs = stmt.executeQuery(sql);
-					JsonArray ja = new JsonArray();
+					//JsonArray ja = new JsonArray();
 					while (rs.next()) {
-						JsonObject json = new JsonObject();
+						/*JsonObject json = new JsonObject();
 						json.add(CatalogField.ATT_GROUPING_VALUEID, new JsonPrimitive(rs.getString(1)));
 						json.add(CatalogField.ATT_GROUPING_VALUE, new JsonPrimitive(rs.getString(2)));
-						ja.add(json);
+						ja.add(json);*/
+						cat.addSegment(field.getId(), rs.getString(1), rs.getString(2));
 						modified = true;
 					}
-					field.setAttribute(CatalogField.ATT_GROUPING, ja);
+					//field.setAttribute(CatalogField.ATT_GROUPING, ja);
 				}
 			}
 			
 			if (modified) {
-				new CatalogDao().updateSpec(cat.getId(), cat);
+				//new CatalogDao().updateSpec(cat.getId(), cat);
+				new CatalogDao().updateSegments(cat);
 			}
 			
 			LinkedList<Catalog> subCats = PartnerManager.instance.getSystemSubCatalog(cat.getId());
