@@ -39,7 +39,8 @@ public class ClientSupport {
 		//initialize
 		dropDrillDatabaseIfExists();
 		ScriptRunner.createDatabase(drillDbhost, drillDbport, drillDbname, drillDblogin, drillDbpass, true);
-		SmartpadCommon.initialize(drillDbhost, drillDbport, drillDbname, drillDblogin, drillDbpass);
+		SmartpadCommon.initialize(drillDbhost, drillDbport, drillDbname, drillDblogin, drillDbpass, 
+				"../app-server/imaging/in-queue", "../app-server/imaging/root");
 		SystemCatalogGenrator.createClusterTable = true;
 		SystemCatalogGenrator.generate();
 		PartnerManager.loadSyscatsInitially();
